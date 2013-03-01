@@ -119,3 +119,43 @@ Product.create(title: 'Rails Test Prescriptions',
 <%= yield %>
 </body>
 </html>
+##app/views/products/index.html.erb
+##app/models/product.rb
+class Product < ActiveRecord::Base
+validates :title, :description, :image_url, presence: true
+validates :price, numericality: {greater_than_or_equal_to: 0.01}
+validates :title, uniqueness: true
+validates :image_url, allow_blank: true, format: {
+with:
+%r{\.(gif|jpg|png)$}i,
+message: 'must be a URL for GIF, JPG or PNG image.'
+}
+end
+#商品目录显示
+<pre>
+rails generate controller Store index
+</pre>
+
+##routes
+<pre>
+root to: 'store#index', as: 'store'
+</pre>
+##app/controllers/store_controller.rb
+<pre>
+def index
+@products = Product.order(:title)
+end
+</pre>
+
+rm public/index.html
+
+##显示顺序偏好
+default_scope :order => 'title'
+##app/views/store/index.html.erb
+
+##app/assets/stylesheets/store.css.scss
+
+##加入侧边栏
+###app/views/layouts/application.html.erb
+###app/assets/stylesheets/application.css.scss
+
