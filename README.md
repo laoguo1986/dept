@@ -159,3 +159,74 @@ default_scope :order => 'title'
 ###app/views/layouts/application.html.erb
 ###app/assets/stylesheets/application.css.scss
 
+#购物车
+<pre>
+rails generate scaffold cart
+rake db:migrate
+</pre>
+
+##current_cart 方法
+<pre>
+class ApplicationController < ActionController::Base
+   protect_from_forgery
+
+
+   private
+
+   def current_cart
+       Cart.find(session[:cart_id])
+       rescue ActiveRecord::RecordNotFound
+       cart = Cart.create
+       session[:cart_id] = cart.id
+       cart
+       end
+end
+</pre>
+
+##将产品放到购物车
+<pre>
+rails generate scaffold line_item product_id:integer cart_id:integer
+rake db:migrate
+</pre>
+
+app/models/cart.rb
+<pre>
+has_many :line_items, dependent: :destroy
+</pre>
+
+app/models/line_item.rb
+<pre>
+belongs_to :product
+belongs_to :cart
+</pre>
+
+app/models/product.rb
+<pre>
+  has_many :line_items
+  before_destroy :ensure_not_referenced_by_any_line_item
+  attr_accessible :description, :image_url, :price, :title
+  validates :title, :description, :image_url, presence: true
+  validates :price, numericality: {greater_than_or_equal_to: 0.01}
+  validates :title, uniqueness: true
+  validates :image_url, allow_blank: true, format: {
+    with:    %r{\.(gif|jpg|png)\Z}i,
+    message: 'must be a URL for GIF, JPG or PNG image.'
+  }
+  validates :title, length: {minimum: 10}
+
+  private
+
+    # ensure that there are no line items referencing this product
+    def ensure_not_referenced_by_any_line_item
+      if line_items.empty?
+        return true
+      else
+        errors.add(:base, 'Line Items present')
+        return false
+      end
+    end
+end
+</pre>
+
+##添加一个按钮
+
